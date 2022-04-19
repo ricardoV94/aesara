@@ -1897,9 +1897,9 @@ class SpSum(Op):
             else:
                 ones = at.ones_like(x)
                 if self.axis == 0:
-                    r = at.addbroadcast(gz.dimshuffle("x", 0), 0) * ones
+                    r = gz.dimshuffle("x", 0) * ones
                 elif self.axis == 1:
-                    r = at.addbroadcast(gz.dimshuffle(0, "x"), 1) * ones
+                    r = gz.dimshuffle(0, "x") * ones
                 else:
                     raise ValueError("Illegal value for self.axis.")
             r = SparseFromDense(o_format)(r)
