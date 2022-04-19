@@ -20,7 +20,7 @@ from aesara.misc.safe_asarray import _asarray
 from aesara.printing import Printer, pprint, set_precedence
 from aesara.scalar.basic import ScalarConstant
 from aesara.tensor import _get_vector_length, as_tensor_variable, get_vector_length
-from aesara.tensor.basic import addbroadcast, alloc, get_scalar_constant_value
+from aesara.tensor.basic import alloc, get_scalar_constant_value
 from aesara.tensor.elemwise import DimShuffle
 from aesara.tensor.exceptions import (
     AdvancedIndexingError,
@@ -28,7 +28,7 @@ from aesara.tensor.exceptions import (
     ShapeError,
 )
 from aesara.tensor.math import clip
-from aesara.tensor.shape import Reshape
+from aesara.tensor.shape import Reshape, specify_shape
 from aesara.tensor.type import (
     TensorType,
     bscalar,
@@ -1320,14 +1320,18 @@ def inc_subtensor(
             f"subtensor with a {int(y.ndim)}-dimensional value."
         )
 
+    # It is acceptable to try to increment a subtensor with a
+    # broadcastable dim with a tensor that is not broadcastable
+    # on that dimension. However, its length must then be 1.
+    # We insert a Rebroadcast Op to make sure it is the case.
+    constrained_y_dims = [None] * y.ndim
     dim_offset = x.ndim - y.ndim
     for dim in range(y.ndim):
         if x.broadcastable[dim + dim_offset] and not y.broadcastable[dim]:
-            # It is acceptable to try to increment a subtensor with a
-            # broadcastable dim with a tensor that is not broadcastable
-            # on that dimension. However, its length must then be 1.
-            # We insert a Rebroadcast Op to make sure it is the case.
-            y = addbroadcast(y, dim)
+            constrained_y_dims[dim] = 1
+    # Only apply specify_shape if needed
+    if len(set(constrained_y_dims)) != 1:
+        y = specify_shape(y, constrained_y_dims)
 
     if not x.owner:
         raise TypeError("x must be the result of a subtensor operation")
