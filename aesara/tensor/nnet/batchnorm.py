@@ -12,7 +12,18 @@ from aesara.tensor.basic_opt import register_specialize_device
 from aesara.tensor.elemwise import Elemwise
 from aesara.tensor.math import mean, prod, reciprocal, sqrt
 from aesara.tensor.math import sum as at_sum
+from aesara.tensor.shape import specify_shape
 from aesara.tensor.type import TensorType
+
+
+def _specify_shapes_of_size1(x, *axes):
+    new_shape = list(x.type.shape)
+    for axis in axes:
+        new_shape[axis] = 1
+    if tuple(new_shape) != x.type.shape:
+        return specify_shape(x, new_shape)
+    else:
+        return x
 
 
 class BNComposite(Composite):
@@ -241,8 +252,8 @@ def batch_normalization_train(
         gamma = gamma.dimshuffle(params_dimshuffle_pattern)
         beta = beta.dimshuffle(params_dimshuffle_pattern)
     else:
-        gamma = at.addbroadcast(gamma, *axes)
-        beta = at.addbroadcast(beta, *axes)
+        gamma = _specify_shapes_of_size1(gamma, *axes)
+        beta = _specify_shapes_of_size1(beta, *axes)
 
     batchnorm_op = AbstractBatchNormTrain(axes=axes)
 
@@ -253,8 +264,8 @@ def batch_normalization_train(
             running_mean = running_mean.dimshuffle(params_dimshuffle_pattern)
             running_var = running_var.dimshuffle(params_dimshuffle_pattern)
         else:
-            running_mean = at.addbroadcast(running_mean, *axes)
-            running_var = at.addbroadcast(running_var, *axes)
+            running_mean = _specify_shapes_of_size1(running_mean, *axes)
+            running_var = _specify_shapes_of_size1(running_var, *axes)
         out, mean, invstd, new_running_mean, new_running_var = batchnorm_op(
             inputs,
             gamma,
@@ -377,10 +388,10 @@ def batch_normalization_test(
         mean = mean.dimshuffle(params_dimshuffle_pattern)
         var = var.dimshuffle(params_dimshuffle_pattern)
     else:
-        gamma = at.addbroadcast(gamma, *axes)
-        beta = at.addbroadcast(beta, *axes)
-        mean = at.addbroadcast(mean, *axes)
-        var = at.addbroadcast(var, *axes)
+        gamma = _specify_shapes_of_size1(gamma, *axes)
+        beta = _specify_shapes_of_size1(beta, *axes)
+        mean = _specify_shapes_of_size1(mean, *axes)
+        var = _specify_shapes_of_size1(var, *axes)
 
     batchnorm_op = AbstractBatchNormInference(axes=axes)
     return batchnorm_op(inputs, gamma, beta, mean, var, epsilon=epsilon)
@@ -609,7 +620,7 @@ class AbstractBatchNormInference(Op):
             )
 
         scale, bias, est_mean, est_var = (
-            at.addbroadcast(t, *axes) for t in (scale, bias, est_mean, est_var)
+            _specify_shapes_of_size1(t, *axes) for t in (scale, bias, est_mean, est_var)
         )
 
         # define helper expressions
