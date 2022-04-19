@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 import numpy as np
-import pytest
 
 import aesara
 import aesara.tensor as at
@@ -174,7 +173,7 @@ def test_bn_feature_maps():
         utt.verify_grad(conv_bn, [X, G, B, M, V])
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_batch_normalization_train():
 
     for axes in ("per-activation", "spatial", (1, 2, 3, 4)):
@@ -356,7 +355,7 @@ def test_batch_normalization_train():
                 )  # ddscale
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_batch_normalization_train_grad_grad():
 
     for axes in ("per-activation", "spatial", (1, 2, 3, 4)):
@@ -574,7 +573,7 @@ def test_batch_normalization_train_broadcast():
             assert 0.0 == f(*inputs)
 
 
-@pytest.mark.slow
+# @pytest.mark.slow
 def test_batch_normalization_test():
     for axes in ("per-activation", "spatial", (1, 2, 3, 4)):
         for vartype in (tensor5, tensor3, vector):
