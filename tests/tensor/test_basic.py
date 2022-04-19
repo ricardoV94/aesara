@@ -3198,7 +3198,7 @@ class TestLongTensor:
             constant()[[val, val]]
 
 
-class TestBroadcast:
+class TestRebroadcast:
     def test_addbroadcast_validation(self):
         x = as_tensor_variable(np.zeros((2, 3)))
         with pytest.raises(ValueError, match=".*pattern does not.*"):
@@ -3294,7 +3294,7 @@ class TestBroadcast:
             assert isinstance(topo[1].op, MakeVector)
 
 
-class TestRebroadcast(utt.InferShapeTester):
+class TestRebroadcastShape(utt.InferShapeTester):
     def test_rebroadcast(self):
         rng = np.random.default_rng(3453)
         # Rebroadcast
