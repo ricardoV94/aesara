@@ -2076,103 +2076,98 @@ def test_dimshuffle():
     assert (f(np.zeros((3, 1))) + np.ones(2) == np.ones((3, 2))).all()
 
 
-def test_flatten_ndim_default():
-    a = dmatrix()
-    c = flatten(a)
-    f = inplace_func([a], c)
-    a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
-    c_val = _asarray([0, 1, 2, 3, 4, 5], dtype="float64")
-    assert np.all(f(a_val) == c_val)
-    f = inplace_func([a], c)
-    assert np.all(f(a_val) == c_val)
+class TestFlatten:
+    def test_flatten_ndim_default(self):
+        a = dmatrix()
+        c = flatten(a)
+        f = inplace_func([a], c)
+        a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
+        c_val = _asarray([0, 1, 2, 3, 4, 5], dtype="float64")
+        assert np.all(f(a_val) == c_val)
+        f = inplace_func([a], c)
+        assert np.all(f(a_val) == c_val)
 
-    utt.verify_grad(flatten, [a_val])
+        utt.verify_grad(flatten, [a_val])
 
+    def test_flatten_scalar(self):
+        a = dscalar()
+        c = flatten(a)
+        f = inplace_func([a], c)
+        a_val = _asarray(3.0, dtype="float64")
+        c_val = _asarray([3.0], dtype="float64")
+        assert np.all(f(a_val) == c_val)
+        f = inplace_func([a], c)
+        assert np.all(f(a_val) == c_val)
 
-def test_flatten_scalar():
-    a = dscalar()
-    c = flatten(a)
-    f = inplace_func([a], c)
-    a_val = _asarray(3.0, dtype="float64")
-    c_val = _asarray([3.0], dtype="float64")
-    assert np.all(f(a_val) == c_val)
-    f = inplace_func([a], c)
-    assert np.all(f(a_val) == c_val)
+        utt.verify_grad(flatten, [a_val])
 
-    # utt.verify_grad(flatten, [a_val]) #TODO: fix verify_grd to work on scalars
+    def test_flatten_ndim1(self):
+        a = dmatrix()
+        c = flatten(a, 1)
+        f = inplace_func([a], c)
+        a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
+        c_val = _asarray([0, 1, 2, 3, 4, 5], dtype="float64")
+        assert np.all(f(a_val) == c_val)
+        f = inplace_func([a], c)
+        assert np.all(f(a_val) == c_val)
 
+        utt.verify_grad(flatten, [a_val])
 
-def test_flatten_ndim1():
-    a = dmatrix()
-    c = flatten(a, 1)
-    f = inplace_func([a], c)
-    a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
-    c_val = _asarray([0, 1, 2, 3, 4, 5], dtype="float64")
-    assert np.all(f(a_val) == c_val)
-    f = inplace_func([a], c)
-    assert np.all(f(a_val) == c_val)
+    def test_flatten_ndim2(self):
+        a = dmatrix()
+        c = flatten(a, 2)
+        f = inplace_func([a], c)
+        a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
+        assert np.all(f(a_val) == a_val)
+        f = inplace_func([a], c)
+        assert np.all(f(a_val) == a_val)
 
-    utt.verify_grad(flatten, [a_val])
+        flatten_2 = partial(flatten, ndim=2)
+        utt.verify_grad(flatten_2, [a_val])
 
+    def test_flatten_ndim2_of_3(self):
+        a = TensorType("float64", (False, False, False))()
+        c = flatten(a, 2)
+        f = inplace_func([a], c)
+        a_val = _asarray([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype="float64")
+        c_val = _asarray([[0, 1, 2, 3], [4, 5, 6, 7]], dtype="float64")
+        assert np.all(f(a_val) == c_val)
+        f = inplace_func([a], c)
+        assert np.all(f(a_val) == c_val)
 
-def test_flatten_ndim2():
-    a = dmatrix()
-    c = flatten(a, 2)
-    f = inplace_func([a], c)
-    a_val = _asarray([[0, 1, 2], [3, 4, 5]], dtype="float64")
-    assert np.all(f(a_val) == a_val)
-    f = inplace_func([a], c)
-    assert np.all(f(a_val) == a_val)
+        flatten_2 = partial(flatten, ndim=2)
+        utt.verify_grad(flatten_2, [a_val])
 
-    flatten_2 = partial(flatten, ndim=2)
-    utt.verify_grad(flatten_2, [a_val])
+    def test_flatten_broadcastable(self):
+        # Ensure that the broadcastable pattern of the output is coherent with
+        # that of the input
 
+        inp = TensorType("float64", (False, False, False, False))()
+        out = flatten(inp, ndim=2)
+        assert out.broadcastable == (False, False)
 
-def test_flatten_ndim2_of_3():
-    a = TensorType("float64", (False, False, False))()
-    c = flatten(a, 2)
-    f = inplace_func([a], c)
-    a_val = _asarray([[[0, 1], [2, 3]], [[4, 5], [6, 7]]], dtype="float64")
-    c_val = _asarray([[0, 1, 2, 3], [4, 5, 6, 7]], dtype="float64")
-    assert np.all(f(a_val) == c_val)
-    f = inplace_func([a], c)
-    assert np.all(f(a_val) == c_val)
+        inp = TensorType("float64", (False, False, False, True))()
+        out = flatten(inp, ndim=2)
+        assert out.broadcastable == (False, False)
 
-    flatten_2 = partial(flatten, ndim=2)
-    utt.verify_grad(flatten_2, [a_val])
+        inp = TensorType("float64", (False, True, False, True))()
+        out = flatten(inp, ndim=2)
+        assert out.broadcastable == (False, False)
 
+        inp = TensorType("float64", (False, True, True, True))()
+        out = flatten(inp, ndim=2)
+        assert out.broadcastable == (False, True)
 
-def test_flatten_broadcastable():
-    # Ensure that the broadcastable pattern of the output is coherent with
-    # that of the input
+        inp = TensorType("float64", (True, False, True, True))()
+        out = flatten(inp, ndim=3)
+        assert out.broadcastable == (True, False, True)
 
-    inp = TensorType("float64", (False, False, False, False))()
-    out = flatten(inp, ndim=2)
-    assert out.broadcastable == (False, False)
-
-    inp = TensorType("float64", (False, False, False, True))()
-    out = flatten(inp, ndim=2)
-    assert out.broadcastable == (False, False)
-
-    inp = TensorType("float64", (False, True, False, True))()
-    out = flatten(inp, ndim=2)
-    assert out.broadcastable == (False, False)
-
-    inp = TensorType("float64", (False, True, True, True))()
-    out = flatten(inp, ndim=2)
-    assert out.broadcastable == (False, True)
-
-    inp = TensorType("float64", (True, False, True, True))()
-    out = flatten(inp, ndim=3)
-    assert out.broadcastable == (True, False, True)
-
-
-def test_flatten_ndim_invalid():
-    a = dmatrix()
-    with pytest.raises(ValueError):
-        flatten(a, 3)
-    with pytest.raises(ValueError):
-        flatten(a, 0)
+    def test_flatten_ndim_invalid(self):
+        a = dmatrix()
+        with pytest.raises(ValueError):
+            flatten(a, 3)
+        with pytest.raises(ValueError):
+            flatten(a, 0)
 
 
 def test_is_flat():
