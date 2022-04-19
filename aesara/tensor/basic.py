@@ -3079,10 +3079,16 @@ def flatten(x, ndim=1):
     else:
         dims = (-1,)
     x_reshaped = x.reshape(dims)
-    bcast_kept_dims = x.broadcastable[: ndim - 1]
-    bcast_new_dim = builtins.all(x.broadcastable[ndim - 1 :])
-    broadcastable = bcast_kept_dims + (bcast_new_dim,)
-    x_reshaped = addbroadcast(x_reshaped, *[i for i in range(ndim) if broadcastable[i]])
+    # TODO: This should be handled by Reshape, not by flatten
+    shape_kept_dims = x.type.shape[: ndim - 1]
+    shape_new_dim = x.type.shape[ndim - 1 :]
+    if None in shape_new_dim:
+        shape_new_dim = None
+    else:
+        shape_new_dim = int(np.prod(shape_new_dim))
+    shape = shape_kept_dims + (shape_new_dim,)
+    if x_reshaped.type.shape != shape:
+        x_reshaped = specify_shape(x_reshaped, shape)
     return x_reshaped
 
 

@@ -2162,6 +2162,28 @@ class TestFlatten:
         out = flatten(inp, ndim=3)
         assert out.broadcastable == (True, False, True)
 
+        inp = TensorType("float64", ())()
+        out = flatten(inp)
+        assert out.broadcastable == (True,)
+
+    def test_flatten_shape(self):
+        # Ensure that the shape pattern of the output is coherent with that of the input
+        inp = TensorType("float64", (None, 4, 3, 2))()
+        out = flatten(inp, ndim=2)
+        assert out.type.shape == (None, 24)
+
+        inp = TensorType("float64", (None, None, 3, 2))()
+        out = flatten(inp, ndim=2)
+        assert out.type.shape == (None, None)
+
+        inp = TensorType("float64", (5, None, None, None))()
+        out = flatten(inp, ndim=2)
+        assert out.type.shape == (5, None)
+
+        inp = TensorType("float64", (5, 4, 3, 2))()
+        out = flatten(inp, ndim=2)
+        assert out.type.shape == (5, 24)
+
     def test_flatten_ndim_invalid(self):
         a = dmatrix()
         with pytest.raises(ValueError):
