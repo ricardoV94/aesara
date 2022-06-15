@@ -679,7 +679,7 @@ def test_jax_IncSubtensor():
     rng = np.random.default_rng(213234)
 
     x_np = rng.uniform(-1, 1, size=(3, 4, 5)).astype(config.floatX)
-    x_at = at.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(config.floatX)
+    x_at = at.constant(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(config.floatX))
 
     # "Set" basic indices
     st_at = at.as_tensor_variable(np.array(-10.0, dtype=config.floatX))
@@ -765,7 +765,7 @@ def test_jax_IncSubtensor():
 def test_jax_IncSubtensors_unsupported():
     rng = np.random.default_rng(213234)
     x_np = rng.uniform(-1, 1, size=(3, 4, 5)).astype(config.floatX)
-    x_at = at.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(config.floatX)
+    x_at = at.constant(np.arange(3 * 4 * 5).reshape((3, 4, 5)).astype(config.floatX))
 
     mask_at = at.as_tensor(x_np) > 0
     out_at = at_subtensor.set_subtensor(x_at[mask_at], 0.0)
